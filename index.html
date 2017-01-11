@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title></title>
+		<script type="text/javascript" src="js/three.js" ></script>
+		<script type="text/javascript" src="js/MTLLoader.js" ></script>
+		<script type="text/javascript" src="js/OBJLoader.js" ></script>
+		<script type="text/javascript" src="js/threex.domevents.js"></script>
+		<script type="text/javascript" src="js/tween.js"></script>
+	</head>
+	<style>
+	  body,html{width: 100%;height: 100%;margin: 0;padding: 0;overflow: hidden;}
+	  @font-face {
+	  	font-family: title;
+	  	src: url('./font/AgencyFB.ttf') format('truetype');
+	  }
+		#world{
+			width: 100%;
+			height: 100%;
+			background: url(img/bc.png);
+			background-size: cover;
+		}	
+		#title{
+			position: absolute;
+			width: 324px;
+			font-size: 50px;
+			font-family: title;
+			top: 10%;
+			left: 50%;
+			margin-left: -162px;
+		}
+		#subTitle{
+			position: absolute;
+			width: 324px;
+			text-align: center;
+			font-size: 30px;
+			font-family: title;
+			top: 20%;
+			left: 50%;
+			margin-left: -162px;
+		}
+		#vocationDes{
+			position: absolute;
+			text-align: center;
+			width: 320px;
+			font-size: 25px;
+			font-family: title;
+			white-space: no-wrap;
+			top: 28%;
+			left: 50%;
+			margin-left: -160px;
+		}
+	</style>
+	<body>
+		<div id="world">
+			<!--场景-->
+		</div>
+		<div id="title">
+			Mushroom And Train
+		</div>
+		<div id="subTitle">
+			Choose your vocation !
+		</div>
+		<div id="vocationDes">
+		</div>
+		<script>
+      var scene0,
+          scene1,
+		  camera,
+		  renderer;
+	  var selected = false;
+		  scene0 = new THREE.Scene();
+		  camera = new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,2000);
+		  camera.position.set(0,5,50);
+		  camera.lookAt(new THREE.Vector3(0,0,0));
+		  renderer = new THREE.WebGLRenderer({alpha:true,antialias:true});
+		  renderer.setSize(window.innerWidth,window.innerHeight);
+		  renderer.shadowMapEnabled = true;
+		  var container =  document.getElementById('world');
+		  container.appendChild(renderer.domElement);
+		  window.addEventListener('resize',onWindowResize,false);
+		  function onWindowResize(){
+	        WIDTH=window.innerWidth;
+	        HEIGHT=window.innerHeight;
+            renderer.setSize(WIDTH, HEIGHT);
+            camera.aspect = WIDTH / HEIGHT;
+            camera.updateProjectionMatrix();
+          }
+		  
+		  var ambient = new THREE.AmbientLight( 0x444444 );
+		  ambient.intensity = 3.2;
+		  scene0.add( ambient );
+		  var directionalLight = new THREE.DirectionalLight( 0xff0000);
+		  directionalLight.position.set( -1, 1, 10 );
+		  directionalLight.intensity = 0.1;
+		  scene0.add( directionalLight );
+		  var directionalLight2 = new THREE.DirectionalLight( 0xffeedd );
+		  directionalLight2.position.set( 1, 1, 10 );
+		  directionalLight2.intensity = 0.1;
+		  scene0.add( directionalLight2 );
+		  
+		  var domEvent = new THREEx.DomEvents(camera,renderer.domElement);
+		  var des = document.getElementById('vocationDes'); 
+		  
+		  var arrowShape = new THREE.Shape();
+		  arrowShape.moveTo(0,0);
+		  arrowShape.lineTo(-2.5,-4.325);
+		  arrowShape.lineTo(0,-2.1);
+		  arrowShape.lineTo(2.5,-4.325);
+		  arrowShape.lineTo(0,0);
+		  var options = {
+		  	amount: 2,
+		  	bevelThickness: 0,
+		  	bevelSize: 1,
+		  	bevelSegments: 3,
+		  	curveSegments: 12,
+		  	step: 1
+		  };
+		  var arrowGeo = new THREE.ExtrudeGeometry(arrowShape,options);
+		  var arrowMat = new THREE.MeshLambertMaterial({color:0xffffff});
+		  var arrow = new THREE.Mesh(arrowGeo,arrowMat);
+		  arrow.scale.set(0.5,0.5,0.5);
+		  var arrow2 = arrow.clone();
+		  var arrow3 = arrow.clone();
+		  
+	  /*add code here*/
+	    var onProgress = function ( xhr ) {
+		if ( xhr.lengthComputable ) {
+			var percentComplete = xhr.loaded / xhr.total * 100;
+					}
+				};
+        var onError = function ( xhr ) { console.log('opps..cannot find model') };
+        var mtlLoader1 = new THREE.MTLLoader();
+        mtlLoader1.setPath( 'modelassets/' );
+        mtlLoader1.load( 'chr-zhanshi.mtl', function( materials ) {
+          materials.preload();
+          var objLoader1 = new THREE.OBJLoader();
+          objLoader1.setMaterials( materials );
+          objLoader1.setPath( 'modelassets/' );
+          objLoader1.load( 'chr-zhanshi.obj', function ( object ) {
+            zhanshi = object;
+            zhanshiBox = new THREE.Object3D();
+            zhanshiBox.add(zhanshi);
+            zhanshiBox.position.x -= 20;
+            arrow.position.set(-20,-12,0);
+            var tweenD = new TWEEN.Tween(arrow.position).to({y:-13},500);
+            var tweenU = new TWEEN.Tween(arrow.position).to({y:-12},500);
+            tweenD.chain(tweenU);
+            tweenU.chain(tweenD);
+            tweenD.start();
+            scene0.add(arrow);
+		    scene0.add( zhanshiBox );
+		    zhanshiTween = new TWEEN.Tween(zhanshiBox.rotation).to({y:-2*Math.PI},2500).repeat(0);
+		    zhanshiTween.onComplete(function(){zhanshiBox.rotation.y = 0});
+		    domEvent.addEventListener(zhanshiBox,'click',function(){
+		    	des.innerHTML = 'Brave — A powerful soldier.Skill: Charge';
+		    	zhanshiTween.start();
+		    });
+		    object.position.y -= 10;
+		    animate();
+		  }, onProgress, onError );
+		});
+	    var mtlLoader2 = new THREE.MTLLoader();
+        mtlLoader2.setPath( 'modelassets/' );
+        mtlLoader2.load( 'chr-fashi.mtl', function( materials ) {
+          materials.preload();
+          var objLoader2 = new THREE.OBJLoader();
+          objLoader2.setMaterials( materials );
+          objLoader2.setPath( 'modelassets/' );
+          objLoader2.load( 'chr-fashi.obj', function ( object ) {
+            fashi = object;
+            fashi.position.x = -1;
+            fashiBox = new THREE.Object3D();
+            arrow2.position.set(0,-12,0);
+            var tweenD = new TWEEN.Tween(arrow2.position).to({y:-13},500);
+            var tweenU = new TWEEN.Tween(arrow2.position).to({y:-12},500);
+            tweenD.chain(tweenU);
+            tweenU.chain(tweenD);
+            tweenD.start();
+            scene0.add(arrow2);
+            fashiBox.add(fashi);
+		    scene0.add( fashiBox );
+		    fashiTween = new TWEEN.Tween(fashiBox.rotation).to({y:-2*Math.PI},2500).repeat(0);
+		    fashiTween.onComplete(function(){fashiBox.rotation.y = 0});
+		    domEvent.addEventListener(fashiBox,'click',function(){
+		    	des.innerHTML = 'Mage —— A wise oracle.Skill: Flash';
+		    	fashiTween.start();
+		    });
+		    object.position.y -= 10;
+		    animate();
+		  }, onProgress, onError );
+		});
+		var mtlLoader3 = new THREE.MTLLoader();
+        mtlLoader3.setPath( 'modelassets/' );
+        mtlLoader3.load( 'chr-mushi.mtl', function( materials ) {
+          materials.preload();
+          var objLoader3 = new THREE.OBJLoader();
+          objLoader3.setMaterials( materials );
+          objLoader3.setPath( 'modelassets/' );
+          objLoader3.load( 'chr-mushi.obj', function ( object ) {
+            mushi = object;
+            mushiBox = new THREE.Object3D();
+            mushi.position.set(0,0,-3);
+            mushiBox.add(mushi);
+            mushiBox.position.x += 20;
+            arrow3.position.set(20,-12,0);
+            var tweenD = new TWEEN.Tween(arrow3.position).to({y:-13},500);
+            var tweenU = new TWEEN.Tween(arrow3.position).to({y:-12},500);
+            tweenD.chain(tweenU);
+            tweenU.chain(tweenD);
+            tweenD.start();
+            scene0.add(arrow3);
+		    scene0.add( mushiBox );
+		    mushiTween = new TWEEN.Tween(mushiBox.rotation).to({y:-2*Math.PI},2500).repeat(0);
+		    mushiTween.onComplete(function(){mushiBox.rotation.y = 0});
+		    domEvent.addEventListener(mushiBox,'click',function(){
+		    	des.innerHTML = 'Priest —— A healing expert.Skill: Heal';
+		    	mushiTween.start();
+		    });
+		    object.position.y -= 10;
+		    animate();
+		  }, onProgress, onError );
+		});
+	  
+	  
+	  
+	  
+	  /*add code above*/
+	  function animate(){
+		requestAnimationFrame(animate);
+		render();
+	  }
+	  function render(){
+	  	TWEEN.update();
+	    renderer.render(scene0,camera);
+      }
+	  </script>
+	</body>
+</html>
