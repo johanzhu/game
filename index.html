@@ -6,8 +6,11 @@
 		<script type="text/javascript" src="js/three.js" ></script>
 		<script type="text/javascript" src="js/MTLLoader.js" ></script>
 		<script type="text/javascript" src="js/OBJLoader.js" ></script>
+		<script type="text/javascript" src="js/ObjectLoader.js" ></script>
+		<script type="text/javascript" src="js/AnimationMixer.js" ></script>
 		<script type="text/javascript" src="js/threex.domevents.js"></script>
 		<script type="text/javascript" src="js/tween.js"></script>
+		<script type="text/javascript" src="js/rotate.js" ></script>
 	</head>
 	<style>
 	  body,html{width: 100%;height: 100%;margin: 0;padding: 0;overflow: hidden;}
@@ -51,6 +54,26 @@
 			left: 50%;
 			margin-left: -160px;
 		}
+		.choose{
+			cursor: pointer;
+		}
+		#start{
+			position: absolute;
+			bottom: 5%;
+			left: 50%;
+			width: 100px;
+			height: 30px;
+			font-size: 40px;
+			margin-left: -50px;
+			padding: 5px 0;
+			line-height: 30px;
+			text-align: center;
+			color: black;
+			font-family: title;
+			border: 2px solid black;
+			cursor: pointer;
+			display: none;
+		}
 	</style>
 	<body>
 		<div id="world">
@@ -64,16 +87,32 @@
 		</div>
 		<div id="vocationDes">
 		</div>
+		<div id="start">Start</div>
+		<audio src="music/selectmusic.mp3" autoplay="autoplay" loop="loop" id="selectMusic"></audio>
+		<audio src="music/gamemusic.mp3" loop="loop" id="gamemusic"></audio>
 		<script>
       var scene0,
           scene1,
-		  camera,
+		  camera0,
+		  camera1,
+		  mixer0,
+		  mixer1,
+		  mixer2,
 		  renderer;
 	  var selected = false;
+	      gameBegin = false;
+	      character = [];
+	      clock = new THREE.Clock();
 		  scene0 = new THREE.Scene();
-		  camera = new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,2000);
-		  camera.position.set(0,5,50);
-		  camera.lookAt(new THREE.Vector3(0,0,0));
+		  camera0 = new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,2000);
+		  camera0.position.set(0,5,50);
+		  camera0.lookAt(new THREE.Vector3(0,0,0));
+		  camera1 = new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,2000);
+		  camera1.position.set(0,5,-40);
+		  camera1.lookAt(new THREE.Vector3(0,10,0));
+		  camera2 = camera1.clone();
+		  camera3 = camera1.clone();
+		  camera4 = camera1.clone();
 		  renderer = new THREE.WebGLRenderer({alpha:true,antialias:true});
 		  renderer.setSize(window.innerWidth,window.innerHeight);
 		  renderer.shadowMapEnabled = true;
@@ -84,10 +123,18 @@
 	        WIDTH=window.innerWidth;
 	        HEIGHT=window.innerHeight;
             renderer.setSize(WIDTH, HEIGHT);
-            camera.aspect = WIDTH / HEIGHT;
-            camera.updateProjectionMatrix();
+            camera0.aspect = WIDTH / HEIGHT;
+            camera0.updateProjectionMatrix();
+            camera1.aspect = WIDTH / HEIGHT;
+            camera1.updateProjectionMatrix();
+            camera2.aspect = WIDTH / HEIGHT;
+            camera2.updateProjectionMatrix();
+            camera3.aspect = WIDTH / HEIGHT;
+            camera3.updateProjectionMatrix();
+            camera4.aspect = WIDTH / HEIGHT;
+            camera4.updateProjectionMatrix();
           }
-		  
+		  /*scene0*/
 		  var ambient = new THREE.AmbientLight( 0x444444 );
 		  ambient.intensity = 3.2;
 		  scene0.add( ambient );
@@ -100,7 +147,7 @@
 		  directionalLight2.intensity = 0.1;
 		  scene0.add( directionalLight2 );
 		  
-		  var domEvent = new THREEx.DomEvents(camera,renderer.domElement);
+		  var domEvent = new THREEx.DomEvents(camera0,renderer.domElement);
 		  var des = document.getElementById('vocationDes'); 
 		  
 		  var arrowShape = new THREE.Shape();
@@ -153,12 +200,14 @@
 		    scene0.add( zhanshiBox );
 		    zhanshiTween = new TWEEN.Tween(zhanshiBox.rotation).to({y:-2*Math.PI},2500).repeat(0);
 		    zhanshiTween.onComplete(function(){zhanshiBox.rotation.y = 0});
-		    domEvent.addEventListener(zhanshiBox,'click',function(){
-		    	des.innerHTML = 'Brave — A powerful soldier.Skill: Charge';
+		    domEvent.addEventListener(zhanshiBox,'click',zhanshiEvent);
+		    function zhanshiEvent(){
+		    	des.innerHTML = "Brave — A powerful soldier.Skill: Charge <span>Select?</span> <span id='brave' class='choose'>Y</span>/<span>N</span>";
+		    	var braveSelect = document.getElementById('brave');
+		    	braveSelect.addEventListener('click',chooseBrave,false);
 		    	zhanshiTween.start();
-		    });
+		    };
 		    object.position.y -= 10;
-		    animate();
 		  }, onProgress, onError );
 		});
 	    var mtlLoader2 = new THREE.MTLLoader();
@@ -183,12 +232,14 @@
 		    scene0.add( fashiBox );
 		    fashiTween = new TWEEN.Tween(fashiBox.rotation).to({y:-2*Math.PI},2500).repeat(0);
 		    fashiTween.onComplete(function(){fashiBox.rotation.y = 0});
-		    domEvent.addEventListener(fashiBox,'click',function(){
-		    	des.innerHTML = 'Mage —— A wise oracle.Skill: Flash';
+		    domEvent.addEventListener(fashiBox,'click',fashiEvent);
+		    function fashiEvent(){
+		    	des.innerHTML = "Mage —— A wise oracle.Skill: Flash <span>Select?</span> <span id='mage' class='choose'>Y</span>/<span>N</span>";
+		    	var mageSelect = document.getElementById('mage');
+		    	mageSelect.addEventListener('click',chooseMage,false);
 		    	fashiTween.start();
-		    });
+		    };
 		    object.position.y -= 10;
-		    animate();
 		  }, onProgress, onError );
 		});
 		var mtlLoader3 = new THREE.MTLLoader();
@@ -214,27 +265,200 @@
 		    scene0.add( mushiBox );
 		    mushiTween = new TWEEN.Tween(mushiBox.rotation).to({y:-2*Math.PI},2500).repeat(0);
 		    mushiTween.onComplete(function(){mushiBox.rotation.y = 0});
-		    domEvent.addEventListener(mushiBox,'click',function(){
-		    	des.innerHTML = 'Priest —— A healing expert.Skill: Heal';
+		    domEvent.addEventListener(mushiBox,'click',mushiEvent);
+		    function mushiEvent(){
+		    	des.innerHTML = "Priest —— A healing expert.Skill: Heal  <span>Select? <span id='priest' class='choose'>Y</span>/<span>N</span></span>";
+		    	var priestSelect = document.getElementById('priest');
+		    	priestSelect.addEventListener('click',choosePriest,false);
 		    	mushiTween.start();
-		    });
+		    };
 		    object.position.y -= 10;
-		    animate();
 		  }, onProgress, onError );
 		});
+		/*scene1,2,3*/
+	  var objectloader = new THREE.ObjectLoader();
+	  objectloader.load('./action/zhanshi.json',function(loadedScene){
+        sceneAnimationClip = loadedScene.animations[0];
+		scene1 = loadedScene;
+		scene1.add(camera1);
+		var ambient = new THREE.AmbientLight(0x444444);
+		ambient.intensity = 4.2;
+		scene1.add(ambient);
+		var directionalLightClone = directionalLight.clone();
+		directionalLightClone.position.set(0,10,-5);
+		directionalLightClone.lookAt(new THREE.Vector3(-1,10,-10));
+		var directionalLight2Clone = directionalLight2.clone();
+		directionalLight2Clone.position.set(1,10,-10);
+		directionalLight2Clone.lookAt(new THREE.Vector3(0,10,0));
+		scene1.add(directionalLightClone);
+		scene1.add(directionalLight2Clone);
+		mixer0 = new THREE.AnimationMixer(scene1);
+		mixer0.clipAction(sceneAnimationClip).loop = false;
+		animate();
+	  });
+	  var objectloader2 = new THREE.ObjectLoader();
+	  objectloader2.load('./action/fashi.json',function(loadedScene){
+        sceneAnimationClip = loadedScene.animations[0];
+		scene2 = loadedScene;
+		scene2.add(camera2);
+		var ambient = new THREE.AmbientLight(0x444444);
+		ambient.intensity = 4.2;
+		scene2.add(ambient);
+		var directionalLightClone = directionalLight.clone();
+		directionalLightClone.position.set(0,10,-5);
+		directionalLightClone.lookAt(new THREE.Vector3(-1,10,-10));
+		var directionalLight2Clone = directionalLight2.clone();
+		directionalLight2Clone.position.set(1,10,-10);
+		directionalLight2Clone.lookAt(new THREE.Vector3(0,10,0));
+		scene2.add(directionalLightClone);
+		scene2.add(directionalLight2Clone);
+		mixer1 = new THREE.AnimationMixer(scene2);
+		mixer1.clipAction(sceneAnimationClip).loop = false;
+		animate();
+	  });
+	  var objectloader3 = new THREE.ObjectLoader();
+	  objectloader3.load('./action/mushi1.json',function(loadedScene){
+        sceneAnimationClip = loadedScene.animations[0];
+		scene3 = loadedScene;
+		scene3.add(camera3);
+		var ambient = new THREE.AmbientLight(0x444444);
+		ambient.intensity = 4.2;
+		scene3.add(ambient);
+		var directionalLightClone = directionalLight.clone();
+		directionalLightClone.position.set(0,10,-5);
+		directionalLightClone.lookAt(new THREE.Vector3(-1,10,-10));
+		var directionalLight2Clone = directionalLight2.clone();
+		directionalLight2Clone.position.set(1,10,-10);
+		directionalLight2Clone.lookAt(new THREE.Vector3(0,10,0));
+		scene3.add(directionalLightClone);
+		scene3.add(directionalLight2Clone);
+		mixer2 = new THREE.AnimationMixer(scene3);
+		mixer2.clipAction(sceneAnimationClip).loop = false;
+		animate();
+	  });
+	  var start = document.getElementById('start');
+	  start.addEventListener('click',function(){
+	  	/*切换音乐*/
+	  	var selectmusic = document.getElementById('selectMusic');
+		selectmusic.pause();
+		var gamemusic = document.getElementById('gamemusic');
+		gamemusic.play();
+		/*移动相机*/
+		var cameraTween = new TWEEN.Tween(camera4.position).to({z:45},3000).start();
+		cameraTween.onComplete(function(){
+			moveAndLookAt(camera4,new THREE.Vector3(0,150,0),new THREE.Vector3(0,5,0),{duration:3000});
+			var cameraRotate = new TWEEN.Tween(camera4.rotation).to({z:-Math.PI/2},2000);
+			tweenRotate.chain(cameraRotate);
+		});
+	  	/*移除文字*/
+	  	var title = document.getElementById('title');
+	  	var subTitle = document.getElementById('subTitle');
+	  	var start = document.getElementById('start');
+	  	var bg = document.getElementById('world');
+	  	document.body.removeChild(title);
+	  	document.body.removeChild(subTitle);
+	  	document.body.removeChild(start);
+	  	bg.style.background = 'lightskyblue';
+	  	gameBegin = true;
+	  });
+	  /*game scene*/
+	  var scene4 = new THREE.Scene();
+	  var camera4 = new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,2000);
+      camera4.position.set(10,0,10);
+      camera4.lookAt(new THREE.Vector3(0,0,0));
+      scene4.add(camera4);
+      /*导入游戏场景模型*/
+      var objectloader4 = new THREE.ObjectLoader();
+      objectloader4.load('./gamescene/train3.json',function( loadedScene ){
+		scene4.add(loadedScene.children[0]);
+		camera4.position.set(0,5,20);
+		camera4.lookAt(new THREE.Vector3(0,5,0));
+		var ambient = new THREE.AmbientLight(0xffffff);
+		var dl = new THREE.DirectionalLight(0xffffff);
+		dl.position.set(-70,80,0);
+		var dr = new THREE.DirectionalLight(0xffffff);
+		dr.position.set(70,80,0);
+		scene4.add(dl);
+		scene4.add(dr);
+		scene4.add(ambient);
+		animate();
+	  });
+      
+      
 	  
 	  
 	  
 	  
-	  /*add code above*/
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	  
 	  function animate(){
 		requestAnimationFrame(animate);
 		render();
 	  }
 	  function render(){
+	  	var scene = scene0;
+	  	var  camera = camera0;
+	  	if(selected === true){
+	  	  if(character[0] === 'brave'){
+	  	  	scene = scene1;
+	  	  	camera = camera1;
+	  	  	mixer0.clipAction(sceneAnimationClip).play();
+	  	  }else if(character[0] === 'mage'){
+	  	  	scene = scene2;
+	  	  	camera = camera2;
+	  	  	mixer1.clipAction(sceneAnimationClip).play();
+	  	  }else if(character[0] === 'priest'){
+	  	  	scene = scene3;
+	  	  	camera = camera3;
+	  	  	mixer2.clipAction(sceneAnimationClip).play();
+	  	  }
+	  	}
+	  	if(gameBegin === true){
+	  		scene = scene4;
+	  		camera = camera4;
+	  	}
+	  	var delta = clock.getDelta();
+	  	if(mixer0 && mixer1&& mixer2){
+	  	  mixer0.update(delta);
+	  	  mixer1.update(delta);
+	  	  mixer2.update(delta);
+	  	}
 	  	TWEEN.update();
-	    renderer.render(scene0,camera);
-      }
+	    renderer.render(scene,camera);
+     }
+	 function chooseBrave(){
+	 	selected = true;
+	 	character.push('brave');
+	 	var des = document.getElementById('vocationDes');
+	 	var start = document.getElementById('start');
+	 	start.style.display = 'block';
+	    document.body.removeChild(des);
+	 }
+	 function chooseMage(){
+	 	selected = true;
+	 	character.push('mage');
+	 	var des = document.getElementById('vocationDes');
+	 	var start = document.getElementById('start');
+	 	start.style.display = 'block';
+	    document.body.removeChild(des);
+	 }
+	 function choosePriest(){
+	 	selected = true;
+	 	character.push('priest');
+	 	var des = document.getElementById('vocationDes');
+	 	var start = document.getElementById('start');
+	 	start.style.display = 'block';
+	    document.body.removeChild(des);
+	 }
 	  </script>
 	</body>
 </html>

@@ -1,5 +1,5 @@
 function moveAndLookAt(camera, dstpos, dstlookat, options) {
-  options || (options = {duration: 300});
+  options || (options = {duration: 3000});
 
   var origpos = new THREE.Vector3().copy(camera.position); // 初始位置
   var origrot = new THREE.Euler().copy(camera.rotation); // 初始欧拉角
@@ -16,7 +16,7 @@ function moveAndLookAt(camera, dstpos, dstlookat, options) {
   //
   
   // 位置函数
-  new TWEEN.Tween(camera.position).to({
+  tweenRotate = new TWEEN.Tween(camera.position).to({
     x: dstpos.x,
     y: dstpos.y,
     z: dstpos.z
