@@ -7,6 +7,7 @@
 		<script type="text/javascript" src="js/MTLLoader.js" ></script>
 		<script type="text/javascript" src="js/OBJLoader.js" ></script>
 		<script type="text/javascript" src="js/ObjectLoader.js" ></script>
+		<script type="text/javascript" src="js/JSONLoader.js" ></script>
 		<script type="text/javascript" src="js/AnimationMixer.js" ></script>
 		<script type="text/javascript" src="js/threex.domevents.js"></script>
 		<script type="text/javascript" src="js/tween.js"></script>
@@ -88,7 +89,7 @@
 		<div id="vocationDes">
 		</div>
 		<div id="start">Start</div>
-		<audio src="music/selectmusic.mp3" autoplay="autoplay" loop="loop" id="selectMusic"></audio>
+		<audio src="music/selectmusic.mp3" autoplay="autoplay" loop="loop" preload="auto" id="selectMusic"></audio>
 		<audio src="music/gamemusic.mp3" loop="loop" id="gamemusic"></audio>
 		<script>
       var scene0,
@@ -98,6 +99,9 @@
 		  mixer0,
 		  mixer1,
 		  mixer2,
+		  mixerBrave,
+		  mixerMage,
+		  mixerPriest,
 		  renderer;
 	  var selected = false;
 	      gameBegin = false;
@@ -171,7 +175,7 @@
 		  var arrow2 = arrow.clone();
 		  var arrow3 = arrow.clone();
 		  
-	  /*add code here*/
+	  /*人物选择*/
 	    var onProgress = function ( xhr ) {
 		if ( xhr.lengthComputable ) {
 			var percentComplete = xhr.loaded / xhr.total * 100;
@@ -275,7 +279,7 @@
 		    object.position.y -= 10;
 		  }, onProgress, onError );
 		});
-		/*scene1,2,3*/
+		/*scene1,2,3 人物动画*/
 	  var objectloader = new THREE.ObjectLoader();
 	  objectloader.load('./action/zhanshi.json',function(loadedScene){
         sceneAnimationClip = loadedScene.animations[0];
@@ -317,7 +321,7 @@
 		animate();
 	  });
 	  var objectloader3 = new THREE.ObjectLoader();
-	  objectloader3.load('./action/mushi1.json',function(loadedScene){
+	  objectloader3.load('./action/mushi.json',function(loadedScene){
         sceneAnimationClip = loadedScene.animations[0];
 		scene3 = loadedScene;
 		scene3.add(camera3);
@@ -336,40 +340,16 @@
 		mixer2.clipAction(sceneAnimationClip).loop = false;
 		animate();
 	  });
-	  var start = document.getElementById('start');
-	  start.addEventListener('click',function(){
-	  	/*切换音乐*/
-	  	var selectmusic = document.getElementById('selectMusic');
-		selectmusic.pause();
-		var gamemusic = document.getElementById('gamemusic');
-		gamemusic.play();
-		/*移动相机*/
-		var cameraTween = new TWEEN.Tween(camera4.position).to({z:45},3000).start();
-		cameraTween.onComplete(function(){
-			moveAndLookAt(camera4,new THREE.Vector3(0,150,0),new THREE.Vector3(0,5,0),{duration:3000});
-			var cameraRotate = new TWEEN.Tween(camera4.rotation).to({z:-Math.PI/2},2000);
-			tweenRotate.chain(cameraRotate);
-		});
-	  	/*移除文字*/
-	  	var title = document.getElementById('title');
-	  	var subTitle = document.getElementById('subTitle');
-	  	var start = document.getElementById('start');
-	  	var bg = document.getElementById('world');
-	  	document.body.removeChild(title);
-	  	document.body.removeChild(subTitle);
-	  	document.body.removeChild(start);
-	  	bg.style.background = 'lightskyblue';
-	  	gameBegin = true;
-	  });
-	  /*game scene*/
+	  /*游戏场景*/
 	  var scene4 = new THREE.Scene();
 	  var camera4 = new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,2000);
       camera4.position.set(10,0,10);
       camera4.lookAt(new THREE.Vector3(0,0,0));
       scene4.add(camera4);
-      /*导入游戏场景模型*/
+      
       var objectloader4 = new THREE.ObjectLoader();
-      objectloader4.load('./gamescene/train3.json',function( loadedScene ){
+      objectloader4.load('./gamescene/train.json',function( loadedScene ){
+      /*设定场景*/	
 		scene4.add(loadedScene.children[0]);
 		camera4.position.set(0,5,20);
 		camera4.lookAt(new THREE.Vector3(0,5,0));
@@ -381,6 +361,59 @@
 		scene4.add(dl);
 		scene4.add(dr);
 		scene4.add(ambient);
+	/*定义开始按钮（此时人物选择完毕）*/
+      	var start = document.getElementById('start');
+	    start.addEventListener('click',function(){
+	  	/*切换音乐*/
+	  	var selectmusic = document.getElementById('selectMusic');
+		selectmusic.pause();
+		var gamemusic = document.getElementById('gamemusic');
+		gamemusic.play();
+		/*移动相机*/
+		var cameraTween = new TWEEN.Tween(camera4.position).to({z:45},18000).start();
+		cameraTween.onComplete(function(){
+			moveAndLookAt(camera4,new THREE.Vector3(0,150,0),new THREE.Vector3(0,5,0),{duration:3000});
+			var cameraRotate = new TWEEN.Tween(camera4.rotation).to({z:-Math.PI/2},2000);
+			cameraRotate.onComplete(function(){
+		      moveAndLookAt(camera4,new THREE.Vector3(-110,90,30),new THREE.Vector3(0,0,0),{duration:3000});
+			});
+			tweenRotate.chain(cameraRotate);
+		});
+	  	/*移除文字*/
+	  	var title = document.getElementById('title');
+	  	var subTitle = document.getElementById('subTitle');
+	  	var start = document.getElementById('start');
+	  	var bg = document.getElementById('world');
+	  	document.body.removeChild(title);
+	  	document.body.removeChild(subTitle);
+	  	document.body.removeChild(start);
+	  	bg.style.background = 'url(img/bc2.png) no-repeat';
+	  	bg.style.backgroundSize = "cover";
+	  	gameBegin = true;
+	  });
+	    addBrave();
+	    addMage();
+	    addPriest();
+	    window.addEventListener('keydown',function(e){
+         	if(e.keyCode === 38){
+         	  brave.rotation.x = Math.PI*(22/180);
+         	  priest.rotation.x = Math.PI*(24/180);
+         	  priest.position.y = 3;
+         	  mage.position.y = 5;
+         	  action1.play();
+              action2.play();
+              action3.play();
+         	}
+         });
+         window.addEventListener('keyup',function(e){
+         	  brave.rotation.x = 0;
+         	  priest.rotation.x = 0;
+         	  priest.position.y = 1;
+         	  mage.position.y = 0.9;
+              action1.stop(); 
+              action2.stop();
+              action3.stop();
+         });
 		animate();
 	  });
       
@@ -407,21 +440,29 @@
 	  function render(){
 	  	var scene = scene0;
 	  	var  camera = camera0;
+	  	/*人物选择*/
 	  	if(selected === true){
 	  	  if(character[0] === 'brave'){
 	  	  	scene = scene1;
 	  	  	camera = camera1;
 	  	  	mixer0.clipAction(sceneAnimationClip).play();
+	  	  	scene4.remove(mage);
+	  	  	scene4.remove(priest);
 	  	  }else if(character[0] === 'mage'){
 	  	  	scene = scene2;
 	  	  	camera = camera2;
 	  	  	mixer1.clipAction(sceneAnimationClip).play();
+	  	  	scene4.remove(brave);
+	  	  	scene4.remove(priest);
 	  	  }else if(character[0] === 'priest'){
 	  	  	scene = scene3;
 	  	  	camera = camera3;
 	  	  	mixer2.clipAction(sceneAnimationClip).play();
+	  	  	scene4.remove(brave);
+	  	  	scene4.remove(mage);
 	  	  }
 	  	}
+	  	/*开始游戏*/
 	  	if(gameBegin === true){
 	  		scene = scene4;
 	  		camera = camera4;
@@ -432,9 +473,14 @@
 	  	  mixer1.update(delta);
 	  	  mixer2.update(delta);
 	  	}
+	  	if(mixerBrave){mixerBrave.update(delta);}
+	  	if(mixerMage){mixerMage.update(delta);}
+	  	if(mixerPriest){mixerPriest.update(delta);}
+	  	
 	  	TWEEN.update();
 	    renderer.render(scene,camera);
      }
+	 /*角色选择*/ 
 	 function chooseBrave(){
 	 	selected = true;
 	 	character.push('brave');
@@ -459,6 +505,64 @@
 	 	start.style.display = 'block';
 	    document.body.removeChild(des);
 	 }
-	  </script>
+	 /*角色添加*/
+	function addBrave(){
+		var loader = new THREE.JSONLoader();
+		loader.load('./action/Zwalk.json',function(geo,mat){
+	      for ( var i = 0; i < mat.length; i ++ ) {  
+            var m = mat[ i ];  
+            m.morphTargets = true;
+          } 
+          model1 = new THREE.Mesh(geo, mat[0]);
+          brave = model1;
+          model1.position.y =  1;
+          scene4.add(model1);
+            
+         mixerBrave = new THREE.AnimationMixer( model1 );
+	     var clip = THREE.AnimationClip.CreateFromMorphTargetSequence( 'brave', geo.morphTargets, 30 );
+		 action1 = mixerBrave.clipAction( clip );
+		 action1.setDuration( 1 );
+         animate();
+		});
+	}
+	function addMage(){
+		var loader = new THREE.JSONLoader();
+		loader.load('./action/Fwalk.json',function(geo,mat){
+	      for ( var i = 0; i < mat.length; i ++ ) {  
+            var m = mat[ i ];  
+            m.morphTargets = true;
+          } 
+          model2 = new THREE.Mesh(geo, mat[0]);
+          mage = model2;
+          model2.position.y = 0.9;
+          scene4.add(model2);
+            
+         mixerMage = new THREE.AnimationMixer( model2 );
+	     var clip = THREE.AnimationClip.CreateFromMorphTargetSequence( 'mage', geo.morphTargets, 30 );
+		 action2 = mixerMage.clipAction( clip );
+		 action2.setDuration( 1 );
+         animate();
+		});
+	}
+	function addPriest(){
+		var loader = new THREE.JSONLoader();
+		loader.load('./action/Mwalk.json',function(geo,mat){
+	      for ( var i = 0; i < mat.length; i ++ ) {  
+            var m = mat[ i ];  
+            m.morphTargets = true;
+          } 
+          model3 = new THREE.Mesh(geo, mat[0]);
+          priest = model3;
+          model3.position.y = 1;
+          scene4.add(model3);
+            
+         mixerPriest = new THREE.AnimationMixer( model3 );
+	     var clip = THREE.AnimationClip.CreateFromMorphTargetSequence( 'priest', geo.morphTargets, 30 );
+		 action3 = mixerPriest.clipAction( clip );
+		 action3.setDuration( 1 );
+         animate();
+		});
+	}
+	</script>
 	</body>
 </html>
