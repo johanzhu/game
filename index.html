@@ -607,8 +607,8 @@
 	window.addEventListener('keydown',function(e){
 	   var keyCode = e.keyCode;
         if((keyCode == 37) || (keyCode == 38) || (keyCode == 39) || (keyCode == 40)){
-         	model3.position.y = 2.5;
-         	mage.position.y = 2.9;
+         	model3.position.y = 1;
+         	model2.position.y = 2.9;
          	action1.play();
             action2.play();
             action3.play();
@@ -634,9 +634,8 @@
     });
     window.addEventListener('keyup',function(e){
          	model1.rotation.x = 0;
-         	model3.position.y = 1;
          	model3.rotation.x = 0;
-            mage.position.y = 0.9;
+            mage.position.y = 0;
          	
          	action1.stop(); 
             action2.stop();
@@ -851,7 +850,7 @@
           model2 = new THREE.Mesh(geo, mat[0]);
           mage = model2;
           mage.name = 'name';
-          model2.position.y = 0.9;
+          model2.position.y = 0;
           scene4.add(mage);
             
          mixerMage = new THREE.AnimationMixer( model2 );
@@ -871,6 +870,7 @@
           priest = new THREE.Object3D();
           priest.name = 'priest';
           model3.position.y = 1;
+          model3.position.z = -1.8;
           priest.add(model3);
           scene4.add(priest);
             
@@ -886,9 +886,11 @@
 			if((character[0] == 'brave') || (character[0] == 'priest')){
 				run.play();
 			}
+			if(character[0]){
+				walkStep = 0.8;
+			}
 		}
 		characterModel.rotation.y = Math.PI/2;
-		model3.rotation.x = Math.PI*(22/180);
 		model1.rotation.x = Math.PI*(22/180);
 		characterModel.position.x += walkStep;
 	}
@@ -897,9 +899,11 @@
 			if((character[0] == 'brave') || (character[0] == 'priest')){
 				run.play();
 			}
+			if(character[0]){
+				walkStep = 0.8;
+			}
 		}
 		characterModel.rotation.y = -Math.PI/2;
-		model3.rotation.x = Math.PI*(22/180);
 		model1.rotation.x = Math.PI*(22/180);
 		characterModel.position.x -= walkStep;
 	}
@@ -908,9 +912,11 @@
 			if((character[0] == 'brave') || (character[0] == 'priest')){
 				run.play();
 			}
+			if(character[0]){
+				walkStep = 0.8;
+			}
 		}
 		characterModel.rotation.y = Math.PI;
-		model3.rotation.x = Math.PI*(22/180);
 		model1.rotation.x = Math.PI*(22/180);
 		characterModel.position.z -= walkStep;
 	}
@@ -919,9 +925,11 @@
 			if((character[0] == 'brave') || (character[0] == 'priest')){
 				run.play();
 			}
+			if(character[0]){
+				walkStep = 0.8;
+			}
 		}
 		characterModel.rotation.y = 0;
-		model3.rotation.x = Math.PI*(22/180);
 		model1.rotation.x = Math.PI*(22/180);
 		characterModel.position.z += walkStep;
 	}
