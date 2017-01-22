@@ -19,6 +19,7 @@
 	  	font-family: title;
 	  	src: url('./font/AgencyFB.ttf') format('truetype');
 	  }
+	  ul{margin: 0;padding: 0;}
 		#world{
 			width: 100%;
 			height: 100%;
@@ -75,8 +76,98 @@
 			cursor: pointer;
 			display: none;
 		}
+		#tips{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			width: 300px;
+			height: 430px;
+			margin: -215px 0 0 -150px;
+			padding: 0 20px;
+			background-color: rgba(0,0,0,0.6);
+			color: white;
+			font-family: title;
+			font-size: 22px;
+			display: none;
+		}
+		#delete{
+			position: absolute;
+			top: 0;
+			right: 5px;
+			font-size: 30px;
+			font-family: "microsoft yahei";
+			cursor: pointer;
+		}
+		#score{
+			position: absolute;
+			top: 20px;
+			left: 40px;
+			font-family: title;
+			font-size: 40px;
+			display: none;
+		}
+		#HP{
+			position: absolute;
+			top: 20px;
+			right: 40px;
+			font-family: title;
+			font-size: 40px;
+			display: none;
+		}
+		#skill{
+			position: absolute;
+			top: 40px;
+			left: 50%;
+			width: 50px;
+			height: auto;
+			background-color:black;
+			border-radius: 3px;
+			overflow: hidden;
+			display: none;
+		}
+		#skillBox{
+			width: 150px;
+			height: 50px;
+		}
+		#skill li{
+			float: left;
+			list-style: none;
+		}
+		#skill img{
+			display: block;
+			width: 50px;
+			height: 50px;
+		}
+		#gameover{
+			position: absolute;
+			width: 300px;
+			height: 200px;
+			top: 50%;
+			left: 50%;
+			margin: -100px 0 0 -200px;
+			padding: 30px 50px 0;
+			text-align: center;
+			font-size: 80px;
+			font-family: title;
+			white-space: nowrap;
+			display: none;
+		}
+		#gameover a{
+			display: inline-block;
+			margin-left: -60px;
+		}
+		#gameover img{
+			display: block;
+			width: 30px;
+			height: 30px;
+		}
 	</style>
 	<body>
+		<audio src="music/selectmusic.mp3" autoplay="autoplay" loop="loop" preload="auto" id="selectMusic"></audio>
+		<audio src="music/gamemusic.mp3" loop="loop" id="gamemusic"></audio>
+	    <audio src="music/heal.mp3" id="heal"></audio>
+	    <audio src="music/flash.mp3" id="flash"></audio>
+	    <audio src="music/run.mp3" id="run" loop="loop"></audio>
 		<div id="world">
 			<!--场景-->
 		</div>
@@ -89,8 +180,32 @@
 		<div id="vocationDes">
 		</div>
 		<div id="start">Start</div>
-		<audio src="music/selectmusic.mp3" autoplay="autoplay" loop="loop" preload="auto" id="selectMusic"></audio>
-		<audio src="music/gamemusic.mp3" loop="loop" id="gamemusic"></audio>
+		<div id="tips">
+			<p>Tips:</p>
+			<p>1:Use ↑ ↓ ← → to control your character!</p>
+			<p>2:Eat mushroom to get score!</p>
+			<p>3:There are three types of mushroom:red(good mushroom +1point),green(poison mushroom -1HP),gold(super mushroom +2point)</p>
+			<p>4:Press SPACE to use your skill !<span style="font-size: 14px;">(brave:Press SPACE first + arrow)</span></p>
+			<p>4:Watch out for the train !</p>
+			<div id="delete">X</div>
+		</div>
+		<div id="score">
+			SCORE: <span id="scoreNum">0</span>
+		</div>
+		<div id="HP">
+			HP: <span id="HPNum">3</span>
+		</div>
+		<div id="skill">
+			<ul id="skillBox">
+				<li><img src="img/charge.png"/></li>
+				<li><img src="img/flash.png"/></li>
+				<li><img src="img/heal.png"/></li>
+			</ul>
+		</div>
+		<div id="gameover">
+			<div>Game over！ <a href="https://github.com/johanzhu/game" target="_blank"><img src="img/github.png"/></a></div>
+			<div style="font-size: 30px;">Refresh to restart the game!</div> 
+		</div>
 		<script>
       var scene0,
           scene1,
@@ -102,27 +217,57 @@
 		  mixerBrave,
 		  mixerMage,
 		  mixerPriest,
+		  model1,
+		  model2,
+		  model3,
 		  renderer;
+	  var tipsShow = false,
+	      scoreShow = false,
+	      HPShow = false,
+	      skillShow = false;
 	  var selected = false;
 	      gameBegin = false;
 	      character = [];
+	      characterModel = null;
+	      walkStep = 0.5;
+	  var globalPlane1 = new THREE.Plane(new THREE.Vector3(1,0,0),63),
+	      globalPlane2 = new THREE.Plane(new THREE.Vector3(-1,0,0),63),
+	      globalPlane3 = new THREE.Plane(new THREE.Vector3(0,0,1),63),
+	      globalPlane4 = new THREE.Plane(new THREE.Vector3(0,0,-1),63);
+	  var globalPlanes = [
+	        //globalPlane1,
+	        globalPlane2,
+	        globalPlane3,
+	        globalPlane4
+	      ];
+	      
 	      clock = new THREE.Clock();
+		  
 		  scene0 = new THREE.Scene();
+		  
 		  camera0 = new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,2000);
 		  camera0.position.set(0,5,50);
 		  camera0.lookAt(new THREE.Vector3(0,0,0));
+		  
 		  camera1 = new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,2000);
 		  camera1.position.set(0,5,-40);
 		  camera1.lookAt(new THREE.Vector3(0,10,0));
+		  
 		  camera2 = camera1.clone();
 		  camera3 = camera1.clone();
 		  camera4 = camera1.clone();
+		  
 		  renderer = new THREE.WebGLRenderer({alpha:true,antialias:true});
 		  renderer.setSize(window.innerWidth,window.innerHeight);
 		  renderer.shadowMapEnabled = true;
+		  renderer.localClippingEnabled = true;
+		  renderer.clippingPlanes = globalPlanes;
+		  
 		  var container =  document.getElementById('world');
 		  container.appendChild(renderer.domElement);
 		  window.addEventListener('resize',onWindowResize,false);
+		  
+		  
 		  function onWindowResize(){
 	        WIDTH=window.innerWidth;
 	        HEIGHT=window.innerHeight;
@@ -298,7 +443,6 @@
 		scene1.add(directionalLight2Clone);
 		mixer0 = new THREE.AnimationMixer(scene1);
 		mixer0.clipAction(sceneAnimationClip).loop = false;
-		animate();
 	  });
 	  var objectloader2 = new THREE.ObjectLoader();
 	  objectloader2.load('./action/fashi.json',function(loadedScene){
@@ -318,7 +462,6 @@
 		scene2.add(directionalLight2Clone);
 		mixer1 = new THREE.AnimationMixer(scene2);
 		mixer1.clipAction(sceneAnimationClip).loop = false;
-		animate();
 	  });
 	  var objectloader3 = new THREE.ObjectLoader();
 	  objectloader3.load('./action/mushi.json',function(loadedScene){
@@ -338,7 +481,6 @@
 		scene3.add(directionalLight2Clone);
 		mixer2 = new THREE.AnimationMixer(scene3);
 		mixer2.clipAction(sceneAnimationClip).loop = false;
-		animate();
 	  });
 	  /*游戏场景*/
 	  var scene4 = new THREE.Scene();
@@ -346,10 +488,40 @@
       camera4.position.set(10,0,10);
       camera4.lookAt(new THREE.Vector3(0,0,0));
       scene4.add(camera4);
-      
+      /*载入蘑菇*/
+      var loader1 = new THREE.JSONLoader();
+	  loader1.load('./modelassets/red.json',function(geo,mat){
+        model = new THREE.Mesh(geo, mat[0]);
+        model.name = 'red';
+        model.scale.set(0.5,0.5,0.5); 
+        redMushroom = model; 
+	  });
+      var loader2 = new THREE.JSONLoader();
+	  loader2.load('./modelassets/green.json',function(geo,mat){
+        model = new THREE.Mesh(geo, mat[0]);
+        model.scale.set(0.5,0.5,0.5); 
+        model.name = 'green';
+        greenMushroom = model; 
+	  });
+	  var loader3 = new THREE.JSONLoader();
+	  loader3.load('./modelassets/gold.json',function(geo,mat){
+        model = new THREE.Mesh(geo, mat[0]);
+        model.name = 'gold';
+        model.scale.set(0.5,0.5,0.5);  
+        goldMushroom = model;
+	  });
+      /*载入火车*/
+      var loader4 = new THREE.JSONLoader();
+	  loader4.load('./modelassets/train.json',function(geo,mat){
+        model = new THREE.Mesh(geo, mat[0]);
+        model.name = 'train';
+        train = model;
+	  });
+      /*载入场景模型*/
       var objectloader4 = new THREE.ObjectLoader();
-      objectloader4.load('./gamescene/train.json',function( loadedScene ){
+      objectloader4.load('./gamescene/scene.json',function( loadedScene ){
       /*设定场景*/	
+        loadedScene.children[0].name = 'scene';
 		scene4.add(loadedScene.children[0]);
 		camera4.position.set(0,5,20);
 		camera4.lookAt(new THREE.Vector3(0,5,0));
@@ -370,15 +542,51 @@
 		var gamemusic = document.getElementById('gamemusic');
 		gamemusic.play();
 		/*移动相机*/
-		var cameraTween = new TWEEN.Tween(camera4.position).to({z:45},18000).start();
+		var cameraTween = new TWEEN.Tween(camera4.position).to({z:45},3000).start();
 		cameraTween.onComplete(function(){
 			moveAndLookAt(camera4,new THREE.Vector3(0,150,0),new THREE.Vector3(0,5,0),{duration:3000});
 			var cameraRotate = new TWEEN.Tween(camera4.rotation).to({z:-Math.PI/2},2000);
 			cameraRotate.onComplete(function(){
 		      moveAndLookAt(camera4,new THREE.Vector3(-110,90,30),new THREE.Vector3(0,0,0),{duration:3000});
-			});
+		      tipsShow = true;
+		      var tips = document.getElementById('tips');
+		      var del = document.getElementById('delete');
+	  		  del.onclick = function(){
+	  		  	switch(character[0]){
+	  		  	  case 'brave':
+	  		  	  document.getElementById('skillBox').style.marginLeft = '0px';
+	  		  	  break; 
+	  		  	  case 'mage':
+	  		  	  document.getElementById('skillBox').style.marginLeft = '-50px';
+	  		  	  break;
+	  		  	  case 'priest':
+	  		  	  document.getElementById('skillBox').style.marginLeft = '-100px';
+	  		  	  break;
+	  		  	  default:
+	  		  	  break;
+	  		  	}
+	  		  	tipsShow = false;
+	  			tips.style.display = 'none';
+	  			scoreShow = true;
+	  			HPShow = true;
+	  			skillShow = true;
+	  	for(var i=0;i<5;i++){
+	  	  generateRedMushRoom();
+	  	}
+	  	for(var i=0;i<3;i++){
+	  	  generateGreenMushRoom();
+	  	}
+	  	for(var i=0;i<1;i++){
+	  	  generateGoldMushRoom();
+	  	}
+		generateTrainOnRail1();
+		generateTrainOnRail2();
+		generateTrainOnRail3();
+		generateTrainOnRail4();
+	  		  }/*delete点击*/
+			});/*旋转wishyouluck结束*/
 			tweenRotate.chain(cameraRotate);
-		});
+		});/*开始场景拉远结束*/
 	  	/*移除文字*/
 	  	var title = document.getElementById('title');
 	  	var subTitle = document.getElementById('subTitle');
@@ -390,56 +598,129 @@
 	  	bg.style.background = 'url(img/bc2.png) no-repeat';
 	  	bg.style.backgroundSize = "cover";
 	  	gameBegin = true;
-	  });
-	    addBrave();
+	  });/*开始点击结束*/
+		addBrave();
 	    addMage();
 	    addPriest();
-	    window.addEventListener('keydown',function(e){
-         	if(e.keyCode === 38){
-         	  brave.rotation.x = Math.PI*(22/180);
-         	  priest.rotation.x = Math.PI*(24/180);
-         	  priest.position.y = 3;
-         	  mage.position.y = 5;
-         	  action1.play();
-              action2.play();
-              action3.play();
-         	}
-         });
-         window.addEventListener('keyup',function(e){
-         	  brave.rotation.x = 0;
-         	  priest.rotation.x = 0;
-         	  priest.position.y = 1;
-         	  mage.position.y = 0.9;
-              action1.stop(); 
-              action2.stop();
-              action3.stop();
-         });
 		animate();
-	  });
-      
-      
-	  
-	  
-	  
-	  
-	  
-	  
-	  
-	  
-	  
-	  
-	  
-	  
+	});/*导入游戏场景*/
+	window.addEventListener('keydown',function(e){
+	   var keyCode = e.keyCode;
+        if((keyCode == 37) || (keyCode == 38) || (keyCode == 39) || (keyCode == 40)){
+         	model3.position.y = 2.5;
+         	mage.position.y = 2.9;
+         	action1.play();
+            action2.play();
+            action3.play();
+        }
+       	switch(keyCode){
+            case 37:
+            moveLeft();
+            break;
+            case 38:
+            moveForward();
+            break;
+            case 39:
+            moveRight();
+            break;
+            case 40:
+            moveBack();
+            break;
+            case 32:
+            useSkill();
+            default:
+            break;
+        }
+    });
+    window.addEventListener('keyup',function(e){
+         	model1.rotation.x = 0;
+         	model3.position.y = 1;
+         	model3.rotation.x = 0;
+            mage.position.y = 0.9;
+         	
+         	action1.stop(); 
+            action2.stop();
+            action3.stop();
+            
+            walkStep = 0.5;
+            run.pause();
+    });
+    function generateRedMushRoom(){
+      var clone = redMushroom.clone();
+          clone.position.x = range(-59.5,59.5);
+          clone.position.z = range(-38.5,38.5);
+          clone.position.y = 1;
+          scene4.add(clone);
+    }
+    function generateGreenMushRoom(){
+      var clone = greenMushroom.clone();
+          clone.position.x = range(-59.5,59.5);
+          clone.position.z = range(-38.5,38.5);
+          clone.position.y = 1;
+          scene4.add(clone);
+    }
+	function generateGoldMushRoom(){
+	  var clone = goldMushroom.clone();
+          clone.position.x = range(-59.5,59.5);
+          clone.position.z = range(-38.5,38.5);
+          clone.position.y = 1;
+          scene4.add(clone);
+	}
+	function generateTrainOnRail1(){
+	  var clone = train.clone();
+	  clone.position.x = 60.5;
+	  clone.position.z = -83;
+	  var tween1 = new TWEEN.Tween(clone.position).to({z:93},5000);
+	  var tween2 = new TWEEN.Tween(clone.position).to({z:-83},1);
+	  tween1.chain(tween2);
+	  tween2.chain(tween1);
+	  tween1.start();
+	  scene4.add(clone);
+	}
+	function generateTrainOnRail2(){
+	  var clone = train.clone();
+	  clone.position.x = 26.5;
+	  clone.position.z = -83;
+	  var tween1 = new TWEEN.Tween(clone.position).to({z:93},4000).delay(4000);
+	  var tween2 = new TWEEN.Tween(clone.position).to({z:-83},1);
+	  tween1.chain(tween2);
+	  tween2.chain(tween1);
+	  tween1.start();
+	  scene4.add(clone);
+	}
+	function generateTrainOnRail3(){
+	  var clone = train.clone();
+	  clone.position.x = -7.5;
+	  clone.position.z = -83;
+	  var tween1 = new TWEEN.Tween(clone.position).to({z:93},4000);
+	  var tween2 = new TWEEN.Tween(clone.position).to({z:-83},1).delay(2000);
+	  tween1.chain(tween2);
+	  tween2.chain(tween1);
+	  tween1.start();
+	  scene4.add(clone);
+	} 
+	function generateTrainOnRail4(){
+	  var clone = train.clone();
+	  clone.position.x = -41.5;
+	  clone.position.z = -83;
+	  var tween1 = new TWEEN.Tween(clone.position).to({z:93},4000).delay(3000);
+	  var tween2 = new TWEEN.Tween(clone.position).to({z:-83},1);
+	  tween1.chain(tween2);
+	  tween2.chain(tween1);
+	  tween1.start();
+	  scene4.add(clone);
+	}  
 	  
 	  
 	  
 	  function animate(){
 		requestAnimationFrame(animate);
 		render();
+		collide();
 	  }
 	  function render(){
-	  	var scene = scene0;
-	  	var  camera = camera0;
+	  	scene = scene0;
+	  	camera = camera0;
 	  	/*人物选择*/
 	  	if(selected === true){
 	  	  if(character[0] === 'brave'){
@@ -466,6 +747,19 @@
 	  	if(gameBegin === true){
 	  		scene = scene4;
 	  		camera = camera4;
+	  	  switch(character[0]){
+	  		  case 'brave':
+	  		  characterModel = brave;
+	  		  break;
+	  		  case 'mage':
+	  		  characterModel = mage;
+	  		  break;
+	  		  case 'priest':
+	  		  characterModel = priest;
+	  		  break;
+	  		  default:
+	  		  break;
+	   	  }
 	  	}
 	  	var delta = clock.getDelta();
 	  	if(mixer0 && mixer1&& mixer2){
@@ -478,6 +772,27 @@
 	  	if(mixerPriest){mixerPriest.update(delta);}
 	  	
 	  	TWEEN.update();
+	  	if(tipsShow){
+	  		var tips = document.getElementById('tips');
+	  		tips.style.display = 'block';
+	  	}
+	  	if(scoreShow){
+	  		var score = document.getElementById('score');
+	  		score.style.display = 'block';
+	  	}
+	  	if(HPShow){
+	  		var HP= document.getElementById('HP');
+	  		HP.style.display = 'block';
+	  	}
+	  	if(skillShow){
+	  		var skill = document.getElementById('skill');
+	  		skill.style.display = 'block';
+	  	}
+	  	var HP = document.getElementById('HPNum');
+		var HPNum = parseInt(HP.innerHTML);
+		if(HPNum == 0){
+			gameOver();
+		}
 	    renderer.render(scene,camera);
      }
 	 /*角色选择*/ 
@@ -514,15 +829,16 @@
             m.morphTargets = true;
           } 
           model1 = new THREE.Mesh(geo, mat[0]);
-          brave = model1;
+          brave = new THREE.Object3D();
+          brave.name = 'brave';
           model1.position.y =  1;
-          scene4.add(model1);
+          brave.add(model1);
+          scene4.add(brave);
             
          mixerBrave = new THREE.AnimationMixer( model1 );
-	     var clip = THREE.AnimationClip.CreateFromMorphTargetSequence( 'brave', geo.morphTargets, 30 );
+	     var clip = THREE.AnimationClip.CreateFromMorphTargetSequence( 'brave', geo.morphTargets, 60 );
 		 action1 = mixerBrave.clipAction( clip );
 		 action1.setDuration( 1 );
-         animate();
 		});
 	}
 	function addMage(){
@@ -534,14 +850,14 @@
           } 
           model2 = new THREE.Mesh(geo, mat[0]);
           mage = model2;
+          mage.name = 'name';
           model2.position.y = 0.9;
-          scene4.add(model2);
+          scene4.add(mage);
             
          mixerMage = new THREE.AnimationMixer( model2 );
-	     var clip = THREE.AnimationClip.CreateFromMorphTargetSequence( 'mage', geo.morphTargets, 30 );
+	     var clip = THREE.AnimationClip.CreateFromMorphTargetSequence( 'mage', geo.morphTargets, 60 );
 		 action2 = mixerMage.clipAction( clip );
 		 action2.setDuration( 1 );
-         animate();
 		});
 	}
 	function addPriest(){
@@ -552,16 +868,206 @@
             m.morphTargets = true;
           } 
           model3 = new THREE.Mesh(geo, mat[0]);
-          priest = model3;
+          priest = new THREE.Object3D();
+          priest.name = 'priest';
           model3.position.y = 1;
-          scene4.add(model3);
+          priest.add(model3);
+          scene4.add(priest);
             
          mixerPriest = new THREE.AnimationMixer( model3 );
-	     var clip = THREE.AnimationClip.CreateFromMorphTargetSequence( 'priest', geo.morphTargets, 30 );
+	     var clip = THREE.AnimationClip.CreateFromMorphTargetSequence( 'priest', geo.morphTargets, 60 );
 		 action3 = mixerPriest.clipAction( clip );
 		 action3.setDuration( 1 );
-         animate();
 		});
+	}
+	/*移动逻辑*/
+	function moveForward(){
+		if(character[0]){
+			if((character[0] == 'brave') || (character[0] == 'priest')){
+				run.play();
+			}
+		}
+		characterModel.rotation.y = Math.PI/2;
+		model3.rotation.x = Math.PI*(22/180);
+		model1.rotation.x = Math.PI*(22/180);
+		characterModel.position.x += walkStep;
+	}
+	function moveBack(){
+		if(character[0]){
+			if((character[0] == 'brave') || (character[0] == 'priest')){
+				run.play();
+			}
+		}
+		characterModel.rotation.y = -Math.PI/2;
+		model3.rotation.x = Math.PI*(22/180);
+		model1.rotation.x = Math.PI*(22/180);
+		characterModel.position.x -= walkStep;
+	}
+	function moveLeft(){
+		if(character[0]){
+			if((character[0] == 'brave') || (character[0] == 'priest')){
+				run.play();
+			}
+		}
+		characterModel.rotation.y = Math.PI;
+		model3.rotation.x = Math.PI*(22/180);
+		model1.rotation.x = Math.PI*(22/180);
+		characterModel.position.z -= walkStep;
+	}
+	function moveRight(){
+		if(character[0]){
+			if((character[0] == 'brave') || (character[0] == 'priest')){
+				run.play();
+			}
+		}
+		characterModel.rotation.y = 0;
+		model3.rotation.x = Math.PI*(22/180);
+		model1.rotation.x = Math.PI*(22/180);
+		characterModel.position.z += walkStep;
+	}
+	/*技能*/
+	function useSkill(){
+		if(character[0]){
+		  switch(character[0]){
+		    case 'brave':
+		    run = document.getElementById('run');
+		    run.addEventListener('ended',function(){
+		    	run.currentTime = 0;
+		    });
+		    walkStep = 2;
+		    break;
+		    case 'mage':
+		    var direction = characterModel.rotation.y;
+		    console.log(direction);
+		    if(direction){
+		      if(direction == Math.PI/2){
+		    	characterModel.position.x += 34;
+		      }else if(direction == -Math.PI/2){
+		    	characterModel.position.x -= 34;
+		      }else if(direction == Math.PI){
+		    	characterModel.position.z -= 34;
+		      }else{
+		    	characterModel.position.z += 34;
+		      }
+		    }else{
+		    	characterModel.position.z += 34;
+		    }
+		    var flash = document.getElementById('flash');
+		    flash.addEventListener('ended',function(){
+		    	flash.currentTime = 0;
+		    });
+		    flash.play();
+		    break;
+		    case 'priest':
+		    var heal = document.getElementById('heal');
+		    heal.addEventListener('ended',function(){
+		    	heal.currentTime = 0;
+		    });
+		    heal.play();
+		    var HP = document.getElementById('HPNum');
+		    var HPNum = parseInt(HP.innerHTML);
+		    if(HPNum < 3){
+	          HP.innerHTML = HPNum + 1;
+	        }
+		    break;
+		  }
+		}
+		
+	}
+	/*碰撞*/
+	function collide(){
+		var hit;
+		if(characterModel){
+			var x = characterModel.position.x;
+			var y = characterModel.position.y;
+			var z = characterModel.position.z;
+			var ray1 = new THREE.Raycaster(new THREE.Vector3(x,y+5,z),new THREE.Vector3(1,5,0));
+			var ray2 = new THREE.Raycaster(new THREE.Vector3(x,y+5,z),new THREE.Vector3(-1,5,0));
+			var ray3 = new THREE.Raycaster(new THREE.Vector3(x,y+5,z),new THREE.Vector3(0,5,1));
+			var ray4 = new THREE.Raycaster(new THREE.Vector3(x,y+5,z),new THREE.Vector3(0,5,-1));
+            var collide1 = ray1.intersectObjects(scene4.children);
+            var collide2 = ray2.intersectObjects(scene4.children);
+            var collide3 = ray3.intersectObjects(scene4.children);
+            var collide4 = ray4.intersectObjects(scene4.children);
+            if(collide1.length > 0){
+              hit = collide1[0].object;
+            }
+            if(collide2.length > 0){
+              hit = collide2[0].object;
+            }
+            if(collide3.length > 0){
+              hit = collide3[0].object;
+            }
+            if(collide4.length > 0){
+              hit = collide4[0].object;
+            }
+            if(hit){
+            	switch(hit.name){
+            		case 'red':
+            		eatRed();
+            		break;
+            		case 'green':
+            		eatGreen();
+            		break;
+            		case 'gold':
+            		eatGold();
+            		case 'train':
+            		trafficAccident();
+            	}
+            }
+		}
+		function eatRed(){
+	      scene4.remove(hit);
+	      generateRedMushRoom();
+	      var score = document.getElementById('scoreNum');
+		  var scoreNum = parseInt(score.innerHTML);
+	      score.innerHTML = scoreNum + 1;
+	    }
+	    function eatGreen(){
+	      scene4.remove(hit);
+	      generateGreenMushRoom();
+		  var HP = document.getElementById('HPNum');
+		  var HPNum = parseInt(HP.innerHTML);
+	      HP.innerHTML = HPNum - 1;
+	    }
+	    function eatGold(){
+	      scene4.remove(hit);
+	      generateGoldMushRoom();
+	      var score = document.getElementById('scoreNum');
+		  var scoreNum = parseInt(score.innerHTML);
+	      score.innerHTML = scoreNum + 2;
+	    }
+	    function trafficAccident(){
+		  gameOver();
+	    }
+	}
+	function gameOver(){
+	    document.getElementById('gameover').style.display = 'block';
+	    document.getElementById('world').style.display = 'none';
+	    var score = document.getElementById('score');
+	  	score.style.opacity = '0';
+	  	var HP= document.getElementById('HP');
+	  	HP.style.opacity = '0';
+	    var skill = document.getElementById('skill');
+	  	skill.style.opacity = '0';
+	  	gameBegin = false;
+	}
+	function range(min,max){
+		var range = max - min;
+		var randomNum = Math.random()*range;
+		var result = Math.round(min + randomNum);
+		return result;
+	}
+	function distance(v1,v2){
+		var x1 = v1.x,
+		    y1 = v1.y,
+		    z1 = v1.z;
+		var x2 = v2.x,
+		    y2 = v2.y,
+		    z2 = v2.z;
+		dd = Math.pow(x1-x2,2) + Math.pow(y1-y2,2) + Math.pow(z1-z2,2);
+		d = Math.sqrt(dd);
+		return d;
 	}
 	</script>
 	</body>

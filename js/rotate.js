@@ -21,6 +21,7 @@ function moveAndLookAt(camera, dstpos, dstlookat, options) {
     y: dstpos.y,
     z: dstpos.z
   }, options.duration).start();
+  
 
   // 旋转 (运用球形插值法)
   (function () {
