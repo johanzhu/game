@@ -161,6 +161,24 @@
 			width: 30px;
 			height: 30px;
 		}
+		#loading{
+			width: 100%;
+			height: 100%;
+			text-align: center;
+			position: absolute;
+			top: 0;
+			font-size: 30px;
+			font-family: "comic sans ms";
+			z-index: 5;
+			background: url(img/bc.png);
+		}
+		#loading:after{
+			display:inline-block;
+            width:0;
+            height:100%;
+            vertical-align:middle;
+            content:"";
+		}
 	</style>
 	<body>
 		<audio src="music/selectmusic.mp3" autoplay="autoplay" loop="loop" preload="auto" id="selectMusic"></audio>
@@ -193,7 +211,7 @@
 			SCORE: <span id="scoreNum">0</span>
 		</div>
 		<div id="HP">
-			HP: <span id="HPNum">3</span>
+			HP: <span id="HPNum">2</span>
 		</div>
 		<div id="skill">
 			<ul id="skillBox">
@@ -205,6 +223,9 @@
 		<div id="gameover">
 			<div>Game over！ <a href="https://github.com/johanzhu/game" target="_blank"><img src="img/github.png"/></a></div>
 			<div style="font-size: 30px;">Refresh to restart the game!</div> 
+		</div>
+		<div id="loading">
+			Loading...
 		</div>
 		<script>
       var scene0,
@@ -225,21 +246,31 @@
 	      scoreShow = false,
 	      HPShow = false,
 	      skillShow = false;
+	  
 	  var selected = false;
 	      gameBegin = false;
+	      loading = false;
 	      character = [];
 	      characterModel = null;
 	      walkStep = 0.5;
+	  
 	  var globalPlane1 = new THREE.Plane(new THREE.Vector3(1,0,0),63),
 	      globalPlane2 = new THREE.Plane(new THREE.Vector3(-1,0,0),63),
 	      globalPlane3 = new THREE.Plane(new THREE.Vector3(0,0,1),63),
 	      globalPlane4 = new THREE.Plane(new THREE.Vector3(0,0,-1),63);
 	  var globalPlanes = [
 	        //globalPlane1,
-	        globalPlane2,
+	        //globalPlane2,
 	        globalPlane3,
 	        globalPlane4
 	      ];
+	      
+	  var manager = new THREE.LoadingManager();
+		  manager.onLoad = function(){
+		    console.log('resourse complete!');
+		    loading = true;
+		  };
+	  var load = document.getElementById('loading');   
 	      
 	      clock = new THREE.Clock();
 		  
@@ -287,10 +318,12 @@
 		  var ambient = new THREE.AmbientLight( 0x444444 );
 		  ambient.intensity = 3.2;
 		  scene0.add( ambient );
+		  
 		  var directionalLight = new THREE.DirectionalLight( 0xff0000);
 		  directionalLight.position.set( -1, 1, 10 );
 		  directionalLight.intensity = 0.1;
 		  scene0.add( directionalLight );
+		  
 		  var directionalLight2 = new THREE.DirectionalLight( 0xffeedd );
 		  directionalLight2.position.set( 1, 1, 10 );
 		  directionalLight2.intensity = 0.1;
@@ -327,11 +360,11 @@
 					}
 				};
         var onError = function ( xhr ) { console.log('opps..cannot find model') };
-        var mtlLoader1 = new THREE.MTLLoader();
+        var mtlLoader1 = new THREE.MTLLoader(manager);
         mtlLoader1.setPath( 'modelassets/' );
         mtlLoader1.load( 'chr-zhanshi.mtl', function( materials ) {
           materials.preload();
-          var objLoader1 = new THREE.OBJLoader();
+          var objLoader1 = new THREE.OBJLoader(manager);
           objLoader1.setMaterials( materials );
           objLoader1.setPath( 'modelassets/' );
           objLoader1.load( 'chr-zhanshi.obj', function ( object ) {
@@ -359,11 +392,11 @@
 		    object.position.y -= 10;
 		  }, onProgress, onError );
 		});
-	    var mtlLoader2 = new THREE.MTLLoader();
+	    var mtlLoader2 = new THREE.MTLLoader(manager);
         mtlLoader2.setPath( 'modelassets/' );
         mtlLoader2.load( 'chr-fashi.mtl', function( materials ) {
           materials.preload();
-          var objLoader2 = new THREE.OBJLoader();
+          var objLoader2 = new THREE.OBJLoader(manager);
           objLoader2.setMaterials( materials );
           objLoader2.setPath( 'modelassets/' );
           objLoader2.load( 'chr-fashi.obj', function ( object ) {
@@ -391,11 +424,11 @@
 		    object.position.y -= 10;
 		  }, onProgress, onError );
 		});
-		var mtlLoader3 = new THREE.MTLLoader();
+		var mtlLoader3 = new THREE.MTLLoader(manager);
         mtlLoader3.setPath( 'modelassets/' );
         mtlLoader3.load( 'chr-mushi.mtl', function( materials ) {
           materials.preload();
-          var objLoader3 = new THREE.OBJLoader();
+          var objLoader3 = new THREE.OBJLoader(manager);
           objLoader3.setMaterials( materials );
           objLoader3.setPath( 'modelassets/' );
           objLoader3.load( 'chr-mushi.obj', function ( object ) {
@@ -425,7 +458,7 @@
 		  }, onProgress, onError );
 		});
 		/*scene1,2,3 人物动画*/
-	  var objectloader = new THREE.ObjectLoader();
+	  var objectloader = new THREE.ObjectLoader(manager);
 	  objectloader.load('./action/zhanshi.json',function(loadedScene){
         sceneAnimationClip = loadedScene.animations[0];
 		scene1 = loadedScene;
@@ -444,7 +477,7 @@
 		mixer0 = new THREE.AnimationMixer(scene1);
 		mixer0.clipAction(sceneAnimationClip).loop = false;
 	  });
-	  var objectloader2 = new THREE.ObjectLoader();
+	  var objectloader2 = new THREE.ObjectLoader(manager);
 	  objectloader2.load('./action/fashi.json',function(loadedScene){
         sceneAnimationClip = loadedScene.animations[0];
 		scene2 = loadedScene;
@@ -463,7 +496,7 @@
 		mixer1 = new THREE.AnimationMixer(scene2);
 		mixer1.clipAction(sceneAnimationClip).loop = false;
 	  });
-	  var objectloader3 = new THREE.ObjectLoader();
+	  var objectloader3 = new THREE.ObjectLoader(manager);
 	  objectloader3.load('./action/mushi.json',function(loadedScene){
         sceneAnimationClip = loadedScene.animations[0];
 		scene3 = loadedScene;
@@ -489,36 +522,36 @@
       camera4.lookAt(new THREE.Vector3(0,0,0));
       scene4.add(camera4);
       /*载入蘑菇*/
-      var loader1 = new THREE.JSONLoader();
+      var loader1 = new THREE.JSONLoader(manager);
 	  loader1.load('./modelassets/red.json',function(geo,mat){
         model = new THREE.Mesh(geo, mat[0]);
+        model.scale.set(0.5,0.5,0.5);
         model.name = 'red';
-        model.scale.set(0.5,0.5,0.5); 
         redMushroom = model; 
 	  });
-      var loader2 = new THREE.JSONLoader();
+      var loader2 = new THREE.JSONLoader(manager);
 	  loader2.load('./modelassets/green.json',function(geo,mat){
         model = new THREE.Mesh(geo, mat[0]);
-        model.scale.set(0.5,0.5,0.5); 
+        model.scale.set(0.5,0.5,0.5);
         model.name = 'green';
         greenMushroom = model; 
 	  });
-	  var loader3 = new THREE.JSONLoader();
+	  var loader3 = new THREE.JSONLoader(manager);
 	  loader3.load('./modelassets/gold.json',function(geo,mat){
         model = new THREE.Mesh(geo, mat[0]);
+        model.scale.set(0.5,0.5,0.5);
         model.name = 'gold';
-        model.scale.set(0.5,0.5,0.5);  
         goldMushroom = model;
 	  });
       /*载入火车*/
-      var loader4 = new THREE.JSONLoader();
+      var loader4 = new THREE.JSONLoader(manager);
 	  loader4.load('./modelassets/train.json',function(geo,mat){
         model = new THREE.Mesh(geo, mat[0]);
         model.name = 'train';
         train = model;
 	  });
       /*载入场景模型*/
-      var objectloader4 = new THREE.ObjectLoader();
+      var objectloader4 = new THREE.ObjectLoader(manager);
       objectloader4.load('./gamescene/scene.json',function( loadedScene ){
       /*设定场景*/	
         loadedScene.children[0].name = 'scene';
@@ -607,8 +640,7 @@
 	window.addEventListener('keydown',function(e){
 	   var keyCode = e.keyCode;
         if((keyCode == 37) || (keyCode == 38) || (keyCode == 39) || (keyCode == 40)){
-         	model3.position.y = 1;
-         	model2.position.y = 2.9;
+         	model2.position.y = 2.3;
          	action1.play();
             action2.play();
             action3.play();
@@ -635,7 +667,7 @@
     window.addEventListener('keyup',function(e){
          	model1.rotation.x = 0;
          	model3.rotation.x = 0;
-            mage.position.y = 0;
+            mage.position.y = -0.1;
          	
          	action1.stop(); 
             action2.stop();
@@ -718,6 +750,9 @@
 		collide();
 	  }
 	  function render(){
+	  	if( loading == true){
+	      load.style.display = 'none';
+		}
 	  	scene = scene0;
 	  	camera = camera0;
 	  	/*人物选择*/
@@ -821,7 +856,7 @@
 	 }
 	 /*角色添加*/
 	function addBrave(){
-		var loader = new THREE.JSONLoader();
+		var loader = new THREE.JSONLoader(manager);
 		loader.load('./action/Zwalk.json',function(geo,mat){
 	      for ( var i = 0; i < mat.length; i ++ ) {  
             var m = mat[ i ];  
@@ -841,7 +876,7 @@
 		});
 	}
 	function addMage(){
-		var loader = new THREE.JSONLoader();
+		var loader = new THREE.JSONLoader(manager);
 		loader.load('./action/Fwalk.json',function(geo,mat){
 	      for ( var i = 0; i < mat.length; i ++ ) {  
             var m = mat[ i ];  
@@ -850,7 +885,7 @@
           model2 = new THREE.Mesh(geo, mat[0]);
           mage = model2;
           mage.name = 'name';
-          model2.position.y = 0;
+          model2.position.y = -0.1;
           scene4.add(mage);
             
          mixerMage = new THREE.AnimationMixer( model2 );
@@ -860,7 +895,7 @@
 		});
 	}
 	function addPriest(){
-		var loader = new THREE.JSONLoader();
+		var loader = new THREE.JSONLoader(manager);
 		loader.load('./action/Mwalk.json',function(geo,mat){
 	      for ( var i = 0; i < mat.length; i ++ ) {  
             var m = mat[ i ];  
@@ -870,7 +905,6 @@
           priest = new THREE.Object3D();
           priest.name = 'priest';
           model3.position.y = 1;
-          model3.position.z = -1.8;
           priest.add(model3);
           scene4.add(priest);
             
@@ -886,8 +920,8 @@
 			if((character[0] == 'brave') || (character[0] == 'priest')){
 				run.play();
 			}
-			if(character[0]){
-				walkStep = 0.8;
+			if(character[0] == 'priest'){
+				walkStep = 1;
 			}
 		}
 		characterModel.rotation.y = Math.PI/2;
@@ -899,8 +933,8 @@
 			if((character[0] == 'brave') || (character[0] == 'priest')){
 				run.play();
 			}
-			if(character[0]){
-				walkStep = 0.8;
+			if(character[0] == 'priest'){
+				walkStep = 1;
 			}
 		}
 		characterModel.rotation.y = -Math.PI/2;
@@ -912,8 +946,8 @@
 			if((character[0] == 'brave') || (character[0] == 'priest')){
 				run.play();
 			}
-			if(character[0]){
-				walkStep = 0.8;
+			if(character[0] == 'priest'){
+				walkStep = 1;
 			}
 		}
 		characterModel.rotation.y = Math.PI;
@@ -925,8 +959,8 @@
 			if((character[0] == 'brave') || (character[0] == 'priest')){
 				run.play();
 			}
-			if(character[0]){
-				walkStep = 0.8;
+			if(character[0] == 'priest'){
+				walkStep = 1;
 			}
 		}
 		characterModel.rotation.y = 0;
@@ -989,24 +1023,46 @@
 			var x = characterModel.position.x;
 			var y = characterModel.position.y;
 			var z = characterModel.position.z;
-			var ray1 = new THREE.Raycaster(new THREE.Vector3(x,y+5,z),new THREE.Vector3(1,5,0));
-			var ray2 = new THREE.Raycaster(new THREE.Vector3(x,y+5,z),new THREE.Vector3(-1,5,0));
-			var ray3 = new THREE.Raycaster(new THREE.Vector3(x,y+5,z),new THREE.Vector3(0,5,1));
-			var ray4 = new THREE.Raycaster(new THREE.Vector3(x,y+5,z),new THREE.Vector3(0,5,-1));
+			switch(characterModel){
+				case brave:
+				var ray1 = new THREE.Raycaster(new THREE.Vector3(x,y+5,z),new THREE.Vector3(1,5,0),0,3.5);
+			    var ray2 = new THREE.Raycaster(new THREE.Vector3(x,y+5,z),new THREE.Vector3(-1,5,0),0,3.5);
+			    var ray3 = new THREE.Raycaster(new THREE.Vector3(x,y+5,z),new THREE.Vector3(0,5,1),0,3.5);
+			    var ray4 = new THREE.Raycaster(new THREE.Vector3(x,y+5,z),new THREE.Vector3(0,5,-1),0,3.5);
+				break;
+				case mage:
+				var ray1 = new THREE.Raycaster(new THREE.Vector3(x,y+3.5,z),new THREE.Vector3(1,3.5,0),0,3.5);
+			    var ray2 = new THREE.Raycaster(new THREE.Vector3(x,y+3.5,z),new THREE.Vector3(-1,3.5,0),0,3.5);
+			    var ray3 = new THREE.Raycaster(new THREE.Vector3(x,y+3.5,z),new THREE.Vector3(0,3.5,1),0,3.5);
+			    var ray4 = new THREE.Raycaster(new THREE.Vector3(x,y+3.5,z),new THREE.Vector3(0,3.5,-1),0,3.5);
+			    break;
+			    case priest:
+			    var ray1 = new THREE.Raycaster(new THREE.Vector3(x,y+5,z),new THREE.Vector3(1,5,0),0,4);
+			    var ray2 = new THREE.Raycaster(new THREE.Vector3(x,y+5,z),new THREE.Vector3(-1,5,0),0,4);
+			    var ray3 = new THREE.Raycaster(new THREE.Vector3(x,y+5,z),new THREE.Vector3(0,5,1),0,4);
+			    var ray4 = new THREE.Raycaster(new THREE.Vector3(x,y+5,z),new THREE.Vector3(0,5,-1),0,4);
+			    break;
+			    default:
+			    break;
+			}
             var collide1 = ray1.intersectObjects(scene4.children);
             var collide2 = ray2.intersectObjects(scene4.children);
             var collide3 = ray3.intersectObjects(scene4.children);
             var collide4 = ray4.intersectObjects(scene4.children);
             if(collide1.length > 0){
+              console.log('forward hit');
               hit = collide1[0].object;
             }
             if(collide2.length > 0){
+            	console.log('back hit');
               hit = collide2[0].object;
             }
             if(collide3.length > 0){
+            	console.log('right hit');
               hit = collide3[0].object;
             }
             if(collide4.length > 0){
+            	console.log('left hit');
               hit = collide4[0].object;
             }
             if(hit){
