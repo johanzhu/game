@@ -270,6 +270,10 @@
 		    console.log('resourse complete!');
 		    loading = true;
 		  };
+	  window.onload = function(){
+	  	var selectMusic = document.getElementById('selectMusic');
+	  	selectMusic.play();
+	  };
 	  var load = document.getElementById('loading');   
 	      
 	      clock = new THREE.Clock();
