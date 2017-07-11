@@ -1,4 +1,6 @@
 # game
+![image](https://github.com/johanzhu/game/blob/gh-pages/img/game.png)</br>
+
 A simple game based on three.js:
 https://johanzhu.github.io/game/  </br>
 Hope you enjoy it!</br>
